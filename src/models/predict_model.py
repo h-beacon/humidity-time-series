@@ -32,10 +32,7 @@ def predict_plot(model, x_test, y_test, scaler):
     real = real[:, -1]
     plt.plot(prediction, color='red', marker='o', markersize=1.8, linewidth=0.8, label='Prediction')
     plt.plot(real, color='green', marker='o', markersize=1.8, linewidth=0.8, label='Real value')
-    if args.target == 'rssi':
-        plt.ylabel('RSSI', fontsize=14)
-    else:
-        plt.ylabel('Humidity', fontsize=14)
+    plt.ylabel('RSSI', fontsize=14)
     plt.legend()
     plt.title('Model prediction')
     plt.show()
