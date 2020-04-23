@@ -28,17 +28,10 @@ def clean(csv,  roll_step, temp=False, absolute=False):
     csv.reset_index(drop=True, inplace=True)
     csv.set_index('Time', drop=True, inplace=True)
     # Deeper sensor
-    if len(csv.index) > 18000:      ### TODO: namisti sebi path
-        old_csv = pd.read_csv("*/github/humidity-time-series/src/data/Old_data.csv", index_col=[0], parse_dates=True)
-        old_csv.rename(columns={'Temp_zemlje': 'degreesC'}, inplace=True)
-        if temp is False:
-            old_csv.drop('degreesC', axis=1, inplace=True)
-        old_csv.rename(columns={'RSSI1': '69886_rssi', 'RSSI2': 'f3c80_rssi',
-                                'SNR1': '69886_snr', 'SNR2': 'f3c80_snr', 'Vlaznost_zemlje': 'humidity'}, inplace=True)
-        csv.drop(csv.loc[:'2020-01-31'].index, axis=0, inplace=True)
+    if len(csv.index) > 18000:
+        csv.drop(csv.loc['2020-01-07':'2020-01-31'].index, axis=0, inplace=True)
         for col in ['69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr']:
             csv[col] = csv[col].rolling(roll_step, min_periods=1).median()
-        csv = old_csv.append(csv)
     # Shallow sensor
     elif (len(csv.index) < 18000) and (len(csv.index) > 17000):
         csv.drop(csv.loc['2019-12-23':'2020-01-21'].index, axis=0, inplace=True)
