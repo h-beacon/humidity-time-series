@@ -1,4 +1,4 @@
-how to run python file:
+How to run python file:
 
 python LSTM_GRU.py --rnn LSTM --trainset deep --step 18 --neurons1 50 --neurons2 50 --optimizer adam
 					--loss mse --lr 0.001 --epochs 100 --batch_size 64 --save
