@@ -9,9 +9,7 @@ parser.add_argument('--batch_size', nargs='?', type=int, default=32)
 parser.add_argument('--step', nargs='?', type=int, help='Timestep')
 args = parser.parse_args()
 
-
-save_dir = ".../github/Models/Model.5h" #PROMIJENITI ZA GITHUB
-
+save_dir = ".../github/Models/Model.h5"
 
 def evaluate(model, x_test, y_test):
     scores = model.evaluate(x_test, y_test, batch_size=args.batch_size, verbose=1)

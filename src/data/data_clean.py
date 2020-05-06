@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-
 def clean(csv,  roll_step, temp=False, absolute=False):
     """ Input je csv file, ako je temp false izbacuje temperaturu zemlje,
         ako je absolute True prebacuje u apsolutnu skalu"""

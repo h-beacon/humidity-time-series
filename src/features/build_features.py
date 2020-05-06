@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-
 def split_sequences(sequences, n_steps):
     x, y = list(), list()
     for i in range(len(sequences)):
