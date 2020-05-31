@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def clean(csv,  roll_step, temp=False, absolute=False):
+def clean(csv,  roll_step=None, temp=False, absolute=False):
     """ Input je csv file, ako je temp false izbacuje temperaturu zemlje,
         ako je absolute True prebacuje u apsolutnu skalu"""
 
@@ -27,15 +27,17 @@ def clean(csv,  roll_step, temp=False, absolute=False):
     csv.reset_index(drop=True, inplace=True)
     csv.set_index('Time', drop=True, inplace=True)
     # Deeper sensor
-    if len(csv.index) > 18000:
+    if len(csv.index) > 31500:
         csv.drop(csv.loc['2020-01-07':'2020-01-31'].index, axis=0, inplace=True)
-        for col in ['69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr']:
-            csv[col] = csv[col].rolling(roll_step, min_periods=1).median()
+        if roll_step is not None:
+            for col in ['69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr']:
+                csv[col] = csv[col].rolling(roll_step, min_periods=1).median()
     # Shallow sensor
-    elif (len(csv.index) < 18000) and (len(csv.index) > 17000):
+    elif len(csv.index) < 31500:
         csv.drop(csv.loc['2019-12-23':'2020-01-21'].index, axis=0, inplace=True)
-        for col in ['69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr']:
-            csv[col] = csv[col].rolling(roll_step, min_periods=1).median()
+        if roll_step is not None:
+            for col in ['69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr']:
+                csv[col] = csv[col].rolling(roll_step, min_periods=1).median()
     if absolute is True:
         for var in ['69886_rssi','f3c80_rssi','69886_snr','f3c80_snr']:
             csv[var] = csv[var].map(lambda x: np.power(10, x/10))
