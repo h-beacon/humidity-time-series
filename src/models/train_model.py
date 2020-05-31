@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 
 data = "" #PROMIJENITI ZA GITHUB
-save_dir = ".../github/Models/Model.5h" #PROMIJENITI ZA GITHUB
+save_dir = ".../github/Models/Model.h5" #PROMIJENITI ZA GITHUB
 
 
 def define_model(x_train):
