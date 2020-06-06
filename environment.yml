@@ -1,0 +1,6 @@
+dependencies:
+    - python>=3.6
+    - matplotlib
+    - numpy
+    - scipy
+    - tensorflow==2.1.0
