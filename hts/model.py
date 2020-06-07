@@ -65,7 +65,7 @@ class Model(object):
 
         # build
         self.model.compile(optimizer=optim, loss=loss, metrics=['mae'])
-        print(self.model.summary())
+        print(f'\n{self.model.summary()}')
 
     def train(self, x_train, y_train, x_valid, y_valid, 
                 epochs, batch_size, save_dir=None):
@@ -90,7 +90,7 @@ class Model(object):
         else:
             losses = self.model.fit(
                 x_train, y_train, epochs=epochs, batch_size=self.batch_size, 
-                verbose=1, callbacks=[lr_scheduler, ], 
+                verbose=1, callbacks=[lr_scheduler, ],
                 validation_data=(x_valid, y_valid), shuffle=False
                 )
         return self.model, losses
