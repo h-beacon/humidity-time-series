@@ -28,7 +28,7 @@ parser.add_argument('--num_neurons', type=int, default=50,
     help='Number of neurons per hidden layer.')
 parser.add_argument('--learning_rate', type=float, default=0.01,
     help='Learning rate for the optimizer.')
-parser.add_argument('--epochs', nargs='+', type=int, default=100,
+parser.add_argument('--epochs', type=int, default=100,
     help='Number of training epochs.')
 parser.add_argument('--batch_size', type=int, default=64,
     help='Batch size.')
@@ -43,52 +43,48 @@ parser.add_argument('--save', action='store_true',
     help='Save the best model after the training is done.')
 args = parser.parse_args()
 
-def main():
-    if args.dataset == 'deep':
-        data_path = 'hts/data/deep.csv'
-        test_data_path = 'hts/data/shallow.csv'
-        if args.save:
-            save_dir = 'saved_models/deep.h5'
-        else: save_dir = None
-    elif args.dataset == 'shallow':
-        data_path = 'hts/data/shallow.csv'
-        test_data_path = 'hts/data/deep.csv'
-        if args.save:
-            save_dir = 'saved_models/shallow.h5'
-        else: save_dir = None
+if args.dataset == 'deep':
+    data_path = 'hts/data/deep.csv'
+    test_data_path = 'hts/data/shallow.csv'
+    if args.save:
+        save_dir = 'saved_models/deep.h5'
+    else: save_dir = None
+elif args.dataset == 'shallow':
+    data_path = 'hts/data/shallow.csv'
+    test_data_path = 'hts/data/deep.csv'
+    if args.save:
+        save_dir = 'saved_models/shallow.h5'
+    else: save_dir = None
 
-    raw_data = pd.read_csv(data_path)
-    raw_test_data = pd.read_csv(test_data_path)
-    data = clean(raw_data, args.step, temp=False, absolute=True)
-    test_data = clean(raw_test_data, args.step, temp=False, absolute=True)
-    x_train, y_train,x_valid, y_valid, x_test, y_test, \
-        scaler = process_data(data, test_data, args.step, args.split_ratio)
-    print('Train set shape: ', x_train.shape, y_train.shape)
-    print('Valid set shape: ', x_valid.shape, y_valid.shape)
-    print('Test set shape: ', x_test.shape, y_test.shape)
- 
-    net = Model(
-        type=args.type,
-        input_shape=(x_train.shape[1], x_train.shape[2]),
-        num_layers=args.num_layers,
-        num_neurons=args.num_neurons
-    )
-    net.build(
-        activation=args.activation,
-        optimizer=args.optimizer, 
-        learning_rate=args.learning_rate, 
-        loss_fn=args.loss_fn
-    )
-    model, losses = net.train(
-        x_train=x_train,
-        y_train=y_train,
-        x_valid=x_valid,
-        y_valid=y_valid,
-        epochs=args.epochs,
-        batch_size=args.batch_size,
-        save_dir=save_dir
-    )
-    predict_plot(model, x_valid, y_valid, x_train, y_train, scaler, losses=losses)
+raw_data = pd.read_csv(data_path)
+raw_test_data = pd.read_csv(test_data_path)
+data = clean(raw_data, args.step, temp=False, absolute=True)
+test_data = clean(raw_test_data, args.step, temp=False, absolute=True)
+x_train, y_train,x_valid, y_valid, x_test, y_test, \
+    scaler = process_data(data, test_data, args.step, args.split_ratio)
+print('Train set shape: ', x_train.shape, y_train.shape)
+print('Valid set shape: ', x_valid.shape, y_valid.shape)
+print('Test set shape: ', x_test.shape, y_test.shape)
 
-if __name__ == "__main__":
-    main()
+net = Model(
+    type=args.type,
+    input_shape=(x_train.shape[1], x_train.shape[2]),
+    num_layers=args.num_layers,
+    num_neurons=args.num_neurons
+)
+net.build(
+    activation=args.activation,
+    optimizer=args.optimizer, 
+    learning_rate=args.learning_rate, 
+    loss_fn=args.loss_fn
+)
+model, losses = net.train(
+    x_train=x_train,
+    y_train=y_train,
+    x_valid=x_valid,
+    y_valid=y_valid,
+    epochs=args.epochs,
+    batch_size=args.batch_size,
+    save_dir=save_dir
+)
+predict_plot(model, x_valid, y_valid, x_train, y_train, scaler, losses=losses)
