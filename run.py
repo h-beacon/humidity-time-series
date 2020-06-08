@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import argparse
+import datetime
 import numpy as np 
 import pandas as pd 
 
@@ -43,17 +44,19 @@ parser.add_argument('--save', action='store_true',
     help='Save the best model after the training is done.')
 args = parser.parse_args()
 
+model_name_prefix = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+
 if args.dataset == 'deep':
     data_path = 'hts/data/deep.csv'
     test_data_path = 'hts/data/shallow.csv'
     if args.save:
-        save_dir = 'saved_models/deep.h5'
+        save_dir = f'saved_models/{model_name_prefix}-deep.h5'
     else: save_dir = None
 elif args.dataset == 'shallow':
     data_path = 'hts/data/shallow.csv'
     test_data_path = 'hts/data/deep.csv'
     if args.save:
-        save_dir = 'saved_models/shallow.h5'
+        save_dir = f'saved_models/{model_name_prefix}-shallow.h5'
     else: save_dir = None
 
 raw_data = pd.read_csv(data_path)
