@@ -2,6 +2,15 @@ from .utils import moving_average
 
 import numpy as np 
 import matplotlib.pyplot as plt
+plt.rcParams["font.family"] = "serif"
+def figsize(scale, nplots=1):
+    fig_width_pt = 390.0                               
+    inches_per_pt = 1.0/72.27
+    golden_mean = (np.sqrt(5.0)-1.0)/2.0
+    fig_width = fig_width_pt*inches_per_pt*scale 
+    fig_height = fig_width*golden_mean*nplots
+    fig_size = [fig_width,fig_height]
+    return fig_size
 
 def predict_plot(model, x_valid, y_valid, x_test, y_test, scaler, losses=None):
     # Test inverse normalization
@@ -29,11 +38,12 @@ def predict_plot(model, x_valid, y_valid, x_test, y_test, scaler, losses=None):
     valid_prediction = moving_average(valid_prediction, periods=10)
     valid_real = valid_real[:, -1]
 
-    fig, axs = plt.subplots(nrows=2, ncols=1, sharex=False, squeeze=True)
+    fig, axs = plt.subplots(nrows=1, ncols=1, sharex=False, squeeze=True, 
+        figsize=figsize(1, 1))
     axs[0].plot(valid_real, 'b-', label='True data')
     axs[0].plot(valid_prediction, 'r-', label='Predicted data')
     axs[1].set_xlabel('Time point')
-    axs[0].set_ylabel('Humidity %')
+    axs[0].set_ylabel('Humidity [%]')
     axs[0].legend(loc='best')
     axs[0].set_title('Validation dataset')
     axs[0].grid()
@@ -41,16 +51,16 @@ def predict_plot(model, x_valid, y_valid, x_test, y_test, scaler, losses=None):
     axs[1].plot(test_real, 'b-', label='True data')
     axs[1].plot(test_prediction, 'r-', label='Predicted data')
     axs[1].set_xlabel('Time point')
-    axs[1].set_ylabel('Humidity %')
+    axs[1].set_ylabel('Humidity [%]')
     axs[1].legend(loc='best')
     axs[1].set_title('Test dataset')
     axs[1].grid()
-
+ 
     plt.tight_layout()
     plt.show()
 
     if losses:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=figsize(1, 1))
         ax.plot(losses.history['loss'], 'b-', label='Train')
         ax.plot(losses.history['val_loss'], 'r-', label='Validation')
         ax.set_xlabel('Epochs')
