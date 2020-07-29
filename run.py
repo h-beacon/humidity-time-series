@@ -3,7 +3,7 @@
 import argparse
 import datetime
 
-from hts.preprocess import clean_soil, clean_air, split_sequences, process_data
+from hts.preprocess import clean_soil, clean_air, process_data, add_derivation
 from hts.visualize import predict_plot
 from hts.utils import moving_average, merge_data, load_raw_data
 from hts.model import Model 
@@ -65,6 +65,7 @@ soil = clean_soil(soil_raw, absolute=False)
 pressure = clean_air(pressure_raw)
 air = clean_air(air_raw)
 data = merge_data(pressure, air, soil)
+data = add_derivation(data)
 x_train, y_train, x_valid, y_valid, x_test, y_test, \
     scaler = process_data(data, args.step, args.split_ratio)
 print('Train set shape: ', x_train.shape, y_train.shape)
