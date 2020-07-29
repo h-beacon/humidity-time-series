@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
-from .utils import round_minutes
+from .utils import round_minutes, holoborodko_diff
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -92,3 +92,15 @@ def clean_air(csv):
     csv.set_index('time', drop=True, inplace=True)
     csv.drop(['name'], axis=1, inplace=True)
     return csv
+
+
+def add_derivation(data):
+    data.reset_index(inplace=True)
+    derivation = holoborodko_diff(data.air_humidity.values, data.time)
+    derivation = pd.Series(derivation, name='air_hum_dt')
+    df = derivation.to_frame()
+    data = pd.merge(data, df, how='inner', left_index=True, right_index=True)
+    data = data[['time', 'pressure', 'air_temp', 'air_humidity', 'air_hum_dt',
+                 '69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr', 'soil_humidity']]
+    data.set_index('time', drop=True, inplace=True)
+    return data
