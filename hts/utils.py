@@ -28,7 +28,7 @@ def load_raw_data(soil_path, pressure_path, air_path):
 
 
 def dt_diff(y1, y2):
-    return (y1 - y2).total_seconds() / 3600.
+    return (y1 - y2).total_seconds() / 360.
 
 
 def holoborodko_diff(y, t):
