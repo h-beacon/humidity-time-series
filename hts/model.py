@@ -26,17 +26,17 @@ class Model(object):
         self.model = Sequential()
         # input layer
         self.model.add(nn(self.num_neurons, return_sequences=seq,
-                     input_shape=self.input_shape))
+                       input_shape=self.input_shape))
         self.model.add(Dropout(0.2))
         # hidden layers
         for layer in range(1, self.num_layers):
             if layer == (self.num_layers - 1):
                 seq = False
-            self.model.add(nn(self.num_layers, activation=activation, 
-                         kernel_initializer='he_normal',
-                         return_sequences=seq))
+            self.model.add(nn(self.num_neurons, activation=activation,
+                           kernel_initializer='he_normal',
+                           return_sequences=seq))
             self.model.add(Dropout(0.2))
-        #output layer
+        # output layer
         self.model.add(Dense(1))
 
         # optimizer
@@ -77,7 +77,7 @@ class Model(object):
         )
 
     def train(self, x_train, y_train, x_valid, y_valid, 
-                epochs, batch_size, save_dir=None):
+              epochs, batch_size, save_dir=None):
         def piecewise_constant_fn(epoch):
             if epoch < 25:
                 return self.learning_rate
