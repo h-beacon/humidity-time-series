@@ -38,14 +38,14 @@ def predict_plot(model, x_valid, y_valid, x_test, y_test, scaler, losses=None):
     valid_prediction = moving_average(valid_prediction, periods=10)
     valid_real = valid_real[:, -1]
 
-    fig, axs = plt.subplots(nrows=1, ncols=1, sharex=False, squeeze=True, 
-        figsize=figsize(1, 1))
+    fig, axs = plt.subplots(nrows=2, ncols=1, sharex=False, squeeze=True,
+                            figsize=figsize(1, 1))
     axs[0].plot(valid_real, 'b-', label='True data')
     axs[0].plot(valid_prediction, 'r-', label='Predicted data')
     axs[1].set_xlabel('Time point')
     axs[0].set_ylabel('Humidity [%]')
     axs[0].legend(loc='best')
-    axs[0].set_title('Validation dataset')
+    axs[0].set_title('Training dataset')
     axs[0].grid()
 
     axs[1].plot(test_real, 'b-', label='True data')
