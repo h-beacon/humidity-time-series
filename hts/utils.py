@@ -14,9 +14,18 @@ def round_minutes(tm):
     return tm
 
 
-def merge_data(csv_1, csv_2, csv_3):
+def merge_data(csv_1, csv_2, csv_3, drop_duplicate_time=False):
+    """ Option for using moving average window aprox. on duplicate timestamps
+        and droping those duplicates """
     merge = pd.merge(csv_1, csv_2, how='inner', left_index=True, right_index=True)
     merged = pd.merge(merge, csv_3, how='inner', left_index=True, right_index=True)
+    if drop_duplicate_time:
+        for col in merged.columns:
+            merged[col] = merged[col].rolling(5, min_periods=1).mean()
+        merged.reset_index(inplace=True)
+        merged = merged.drop_duplicates('time', keep='last')
+        merged.reset_index(drop=True, inplace=True)
+        merged.set_index('time', drop=True, inplace=True)
     return merged
 
 
