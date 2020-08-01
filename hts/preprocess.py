@@ -21,20 +21,18 @@ def split_sequences(sequences, n_steps):
 
 def process_data(data, step, ratio):
     values = data.values
-    # test_values = test_data.values
     scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled = scaler.fit_transform(values)
-    # test_scaled = scaler.transform(test_values)
     split = int(len(data) * ratio)
-    # test_split = int(len(test_data) * ratio)
     if ratio <= 0.8:
         test_split = int(len(data) * (ratio + 0.1))
     elif ratio == 0.9:
         test_split = int(len(data) * (ratio + 0.05))
-    data_train = scaled[:split]
-    data_valid = scaled[split:test_split]
-    # data_test = test_scaled[test_split:]
-    data_test = scaled[test_split:]
+    train = values[:split]
+    valid = values[split:test_split]
+    test = values[test_split:]
+    data_train = scaler.fit_transform(train)
+    data_valid = scaler.transform(valid)
+    data_test = scaler.transform(test)
     x_train, y_train = split_sequences(data_train, step)
     x_valid, y_valid = split_sequences(data_valid, step)
     x_test, y_test = split_sequences(data_test, step)
