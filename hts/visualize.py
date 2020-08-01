@@ -25,7 +25,7 @@ def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scal
         prediction = scaler.inverse_transform(pred)
         real_values = scaler.inverse_transform(real)
         prediction = prediction[:, -1]
-        prediction = moving_average(prediction, periods=20)
+        prediction = moving_average(prediction, periods=100)
         real_values = real_values[:, -1]
         return prediction, real_values
     # Validation inverse normalization
