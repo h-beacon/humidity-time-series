@@ -42,7 +42,7 @@ def process_data(data, step, ratio):
 
 
 def clean_soil(csv, absolute=False):
-    csv = csv[['name','time','69886_rssi','f3c80_rssi','69886_snr','f3c80_snr','degreesC','humidity']]
+    csv = csv[['name', 'time', '69886_rssi', '69886_snr', 'degreesC', 'humidity']]  # without f3c80 gateway
     csv.time = csv.time.astype(str)
     csv['time'] = csv['time'].map(lambda x: x[0:10])
     csv.time = csv.time.astype(int)
@@ -58,22 +58,24 @@ def clean_soil(csv, absolute=False):
         csv.drop(csv.loc['2020-01-07':'2020-01-31'].index, axis=0, inplace=True)
     # elif "Senzor_zemlje" in csv.name.values:
         # csv.drop(csv.loc['2019-12-23':'2020-01-21'].index, axis=0, inplace=True)
+    cols = ['69886_rssi', '69886_snr']  # without f3c80 gateway
     if absolute is True:
-        for var in ['69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr']:
+        for var in cols:
             csv[var] = csv[var].map(lambda x: np.power(10, x/10))
     csv.drop('soil_temp', axis=1, inplace=True)
     csv.time = csv['time'].map(lambda x: round_minutes(x))
-    csv = csv.drop_duplicates('time', keep='last')
+    #csv = csv.drop_duplicates('time', keep='last')
     csv.dropna(axis=0, inplace=True)
     csv.reset_index(drop=True, inplace=True)
     csv.set_index('time', drop=True, inplace=True)
+    csv.drop(csv.loc['2020-07-01':'2020-07-03'].index, axis=0, inplace=True)
     csv.drop(['name'], axis=1, inplace=True)
     return csv
 
 
 def clean_air(csv):
     csv.time = csv.time.astype(str)
-    csv['time']= csv['time'].map(lambda x: x[0:10])
+    csv['time'] = csv['time'].map(lambda x: x[0:10])
     csv.time = csv.time.astype(int)
     csv['time'] = csv['time'].map(lambda x: datetime.utcfromtimestamp(x))
     csv['time'] = csv['time'].dt.floor('Min')
@@ -87,7 +89,7 @@ def clean_air(csv):
     elif "DHMZ_new" in csv.name.values:
         csv.rename(columns={'Tlak': 'pressure'}, inplace=True)
     csv.time = csv['time'].map(lambda x: round_minutes(x))
-    csv = csv.drop_duplicates('time', keep='last')
+    #csv = csv.drop_duplicates('time', keep='last')
     csv.reset_index(drop=True, inplace=True)
     csv.set_index('time', drop=True, inplace=True)
     csv.drop(['name'], axis=1, inplace=True)
@@ -101,6 +103,6 @@ def add_derivation(data):
     df = derivation.to_frame()
     data = pd.merge(data, df, how='inner', left_index=True, right_index=True)
     data = data[['time', 'pressure', 'air_temp', 'air_humidity', 'air_hum_dt',
-                 '69886_rssi', 'f3c80_rssi', '69886_snr', 'f3c80_snr', 'soil_humidity']]
+                 '69886_rssi', '69886_snr', 'soil_humidity']]
     data.set_index('time', drop=True, inplace=True)
     return data

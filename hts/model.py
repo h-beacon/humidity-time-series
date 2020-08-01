@@ -27,7 +27,7 @@ class Model(object):
         # input layer
         self.model.add(nn(self.num_neurons, return_sequences=seq,
                        input_shape=self.input_shape))
-        self.model.add(Dropout(0.2))
+        self.model.add(Dropout(0.1))
         # hidden layers
         for layer in range(1, self.num_layers):
             if layer == (self.num_layers - 1):
@@ -35,7 +35,7 @@ class Model(object):
             self.model.add(nn(self.num_neurons, activation=activation,
                            kernel_initializer='he_normal',
                            return_sequences=seq))
-            self.model.add(Dropout(0.2))
+            self.model.add(Dropout(0.3))
         # output layer
         self.model.add(Dense(1))
 
@@ -77,29 +77,29 @@ class Model(object):
         )
 
     def train(self, x_train, y_train, x_valid, y_valid, 
-              epochs, batch_size, save_dir=None):
+              epochs, batch_size, save_checkpoint=False, save_dir=None):
         def piecewise_constant_fn(epoch):
-            if epoch < 25:
+            if epoch < 50:
                 return self.learning_rate
             return self.learning_rate * 0.1
         lr_scheduler = K.callbacks.LearningRateScheduler(piecewise_constant_fn)
 
         self.batch_size = batch_size
 
-        if save_dir:
+        if save_checkpoint:
             callback = K.callbacks.ModelCheckpoint(
                 save_dir, monitor='val_loss', verbose=1,
                 save_best_only=True, mode='min', period=1
                 )
             losses = self.model.fit(
                 x_train, y_train, epochs=epochs, batch_size=self.batch_size, 
-                verbose=1, callbacks=[callback, lr_scheduler], 
+                verbose=1, callbacks=[callback, lr_scheduler],
                 validation_data=(x_valid, y_valid), shuffle=False
                 )
         else:
             losses = self.model.fit(
                 x_train, y_train, epochs=epochs, batch_size=self.batch_size, 
-                verbose=1, callbacks=[lr_scheduler, ],
+                verbose=1, callbacks=[lr_scheduler],
                 validation_data=(x_valid, y_valid), shuffle=False
                 )
         return self.model, losses

@@ -9,62 +9,65 @@ def figsize(scale, nplots=1):
     golden_mean = (np.sqrt(5.0)-1.0)/2.0
     fig_width = fig_width_pt*inches_per_pt*scale 
     fig_height = fig_width*golden_mean*nplots
-    fig_size = [fig_width,fig_height]
+    fig_size = [fig_width, fig_height]
     return fig_size
 
-def predict_plot(model, x_valid, y_valid, x_test, y_test, scaler, losses=None):
-    # Test inverse normalization
-    test_pred = model.predict(x_test)
-    test_pred = test_pred.reshape(-1, 1)
-    y_test = y_test.reshape(-1, 1)
-    x_test = x_test[:, 0, :]
-    test_prediction = np.concatenate((x_test, test_pred), axis=1)
-    test_real = np.concatenate((x_test, y_test), axis=1)
-    prediction = scaler.inverse_transform(test_prediction)
-    test_real = scaler.inverse_transform(test_real)
-    test_prediction = prediction[:, -1]
-    test_prediction = moving_average(test_prediction, periods=10)
-    test_real = test_real[:, -1]
+
+def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses):
+    # Function for inverse normalization
+    def inverse_norm(model, x, y, scaler):
+        pred = model.predict(x)
+        pred = pred.reshape(-1, 1)
+        y = y.reshape(-1, 1)
+        x = x[:, 0, :]
+        pred = np.concatenate((x, pred), axis=1)
+        real = np.concatenate((x, y), axis=1)
+        prediction = scaler.inverse_transform(pred)
+        real_values = scaler.inverse_transform(real)
+        prediction = prediction[:, -1]
+        prediction = moving_average(prediction, periods=20)
+        real_values = real_values[:, -1]
+        return prediction, real_values
     # Validation inverse normalization
-    valid_pred = model.predict(x_valid)
-    valid_pred = valid_pred.reshape(-1, 1)
-    y_valid = y_valid.reshape(-1, 1)
-    x_valid = x_valid[:, 0, :]
-    val_prediction = np.concatenate((x_valid, valid_pred), axis=1)
-    valid_real = np.concatenate((x_valid, y_valid), axis=1)
-    val_prediction = scaler.inverse_transform(val_prediction)
-    valid_real = scaler.inverse_transform(valid_real)
-    valid_prediction = val_prediction[:, -1]
-    valid_prediction = moving_average(valid_prediction, periods=10)
-    valid_real = valid_real[:, -1]
+    train_prediction, train_real = inverse_norm(model, x_train, y_train, scaler)
+    valid_prediction, valid_real = inverse_norm(model, x_valid, y_valid, scaler)
+    test_prediction, test_real = inverse_norm(model, x_test, y_test, scaler)
 
-    fig, axs = plt.subplots(nrows=2, ncols=1, sharex=False, squeeze=True,
-                            figsize=figsize(1, 1))
-    axs[0].plot(valid_real, 'b-', label='True data')
-    axs[0].plot(valid_prediction, 'r-', label='Predicted data')
-    axs[1].set_xlabel('Time point')
-    axs[0].set_ylabel('Humidity [%]')
-    axs[0].legend(loc='best')
-    axs[0].set_title('Training dataset')
-    axs[0].grid()
+    fig, axs = plt.subplots(nrows=2, ncols=2, sharex=False, squeeze=True,
+                            figsize=figsize(1.5, 1.2))
+    axs[0, 0].plot(train_real, 'b-', label='True data')
+    axs[0, 0].plot(train_prediction, 'r-', label='Predicted data')
+    axs[0, 0].set_xlabel('Time point')
+    axs[0, 0].set_ylabel('Humidity [%]')
+    axs[0, 0].legend(loc='best')
+    axs[0, 0].set_title('Training dataset')
+    axs[0, 0].grid()
 
-    axs[1].plot(test_real, 'b-', label='True data')
-    axs[1].plot(test_prediction, 'r-', label='Predicted data')
-    axs[1].set_xlabel('Time point')
-    axs[1].set_ylabel('Humidity [%]')
-    axs[1].legend(loc='best')
-    axs[1].set_title('Test dataset')
-    axs[1].grid()
+    axs[1, 0].plot(valid_real, 'b-', label='True data')
+    axs[1, 0].plot(valid_prediction, 'r-', label='Predicted data')
+    axs[1, 0].set_xlabel('Time point')
+    axs[1, 0].set_ylabel('Humidity [%]')
+    axs[1, 0].legend(loc='best')
+    axs[1, 0].set_title('Validation dataset')
+    axs[1, 0].grid()
+
+    axs[0, 1].plot(test_real, 'b-', label='True data')
+    axs[0, 1].plot(test_prediction, 'r-', label='Predicted data')
+    axs[0, 1].set_xlabel('Time point')
+    axs[0, 1].set_ylabel('Humidity [%]')
+    axs[0, 1].legend(loc='best')
+    axs[0, 1].set_title('Test dataset')
+    axs[0, 1].grid()
+
+    axs[1, 1].plot(losses.history['loss'], 'b-', label='Train')
+    axs[1, 1].plot(losses.history['val_loss'], 'r-', label='Validation')
+    axs[1, 1].set_xlabel('Epochs')
+    axs[1, 1].set_ylabel('Loss')
+    axs[1, 1].legend(loc='best')
+    axs[1, 1].set_title('Learning curves')
+    axs[1, 1].grid()
  
     plt.tight_layout()
     plt.show()
 
-    if losses:
-        fig, ax = plt.subplots(figsize=figsize(1, 1))
-        ax.plot(losses.history['loss'], 'b-', label='Train')
-        ax.plot(losses.history['val_loss'], 'r-', label='Validation')
-        ax.set_xlabel('Epochs')
-        ax.set_ylabel('Loss')
-        ax.legend()
-        plt.grid()
-        plt.show()
+

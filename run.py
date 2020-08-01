@@ -38,7 +38,7 @@ parser.add_argument('--split_ratio', type=float, default=0.8,
     help='Ratio for train-test split.')
 parser.add_argument('--step', type=int, default=18,
     help='Value for timestamp.')
-parser.add_argument('--save', action='store_true',
+parser.add_argument('--save_checkpoint', action='store_true',
     help='Save the best model after the training is done.')
 args = parser.parse_args()
 
@@ -49,28 +49,22 @@ pressure_path = 'hts/data/DHMZ.csv'
 
 if args.dataset == 'deep':
     soil_path = 'hts/data/Senzor_zemlje_2.csv'
-    if args.save:
-        save_dir = f'saved_models/{model_name_prefix}-deep.h5'
-    else:
-        save_dir = None
+    save_dir = f'saved_models/{model_name_prefix}-deep.h5'
+
 elif args.dataset == 'shallow':
-    data_path = 'hts/data/shallow.csv'
-    if args.save:
-        save_dir = f'saved_models/{model_name_prefix}-shallow.h5'
-    else:
-        save_dir = None
+    soil_path = 'hts/data/shallow.csv'
+    save_dir = f'saved_models/{model_name_prefix}-shallow.h5'
+
 
 soil_raw, pressure_raw, air_raw = load_raw_data(soil_path, pressure_path, air_path)
 soil = clean_soil(soil_raw, absolute=False)
 pressure = clean_air(pressure_raw)
 air = clean_air(air_raw)
-data = merge_data(pressure, air, soil)
-data = add_derivation(data)
+data = merge_data(pressure, air, soil, drop_duplicate_time=True)
+# data = add_derivation(data)  # uncomment if want air_humidity derivation
 x_train, y_train, x_valid, y_valid, x_test, y_test, \
     scaler = process_data(data, args.step, args.split_ratio)
-print('Train set shape: ', x_train.shape, y_train.shape)
-print('Valid set shape: ', x_valid.shape, y_valid.shape)
-print('Test set shape: ', x_test.shape, y_test.shape)
+
 
 net = Model(
     type=args.type,
@@ -84,6 +78,9 @@ net.build(
     learning_rate=args.learning_rate, 
     loss_fn=args.loss_fn
 )
+print('\nTrain set shape: Input {} Target {}'.format(x_train.shape, y_train.shape))
+print('Valid set shape: Input {} Target {}'.format(x_valid.shape, y_valid.shape))
+print('Test set shape: Input {} Target {}\n'.format(x_test.shape, y_test.shape))
 model, losses = net.train(
     x_train=x_train,
     y_train=y_train,
@@ -91,6 +88,13 @@ model, losses = net.train(
     y_valid=y_valid,
     epochs=args.epochs,
     batch_size=args.batch_size,
+    save_checkpoint=args.save_checkpoint,
     save_dir=save_dir
 )
-predict_plot(model, x_train, y_train, x_test, y_test, scaler, losses=losses)
+predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses)
+if not args.save_checkpoint:
+    decision = input("\nSave model? [y,n] ")
+    if decision == "y":
+        model.save(save_dir)
+    else:
+        pass
