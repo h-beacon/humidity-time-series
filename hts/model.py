@@ -1,6 +1,6 @@
 import tensorflow.keras as K
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Activation
 from tensorflow.keras.layers import LSTM, GRU
 from tensorflow.keras.layers import Dropout
 
@@ -27,16 +27,17 @@ class Model(object):
         # input layer
         self.model.add(nn(self.num_neurons, return_sequences=seq,
                        input_shape=self.input_shape))
-        self.model.add(Dropout(0.1))
+        #self.model.add(Dropout(0.1))
         # hidden layers
         for layer in range(1, self.num_layers):
             if layer == (self.num_layers - 1):
                 seq = False
-            self.model.add(nn(self.num_neurons, activation=activation,
-                           kernel_initializer='he_normal',
+            self.model.add(nn(self.num_neurons, activation='tanh',
+                           kernel_initializer='glorot_uniform',
                            return_sequences=seq))
-            self.model.add(Dropout(0.3))
+            self.model.add(Dropout(0.2))
         # output layer
+        self.model.add(Dense(10, activation=activation, kernel_initializer='he_normal'))
         self.model.add(Dense(1))
 
         # optimizer
@@ -60,6 +61,8 @@ class Model(object):
             loss = 'mean_absolute_error'
         elif loss_fn == 'mse':
             loss = 'mean_squared_error'
+        elif loss_fn == 'msle':
+            loss = 'mean_squared_logarithmic_error'
         else:
             raise ValueError('No such loss function.')
 
@@ -67,14 +70,14 @@ class Model(object):
         self.model.compile(optimizer=optim, loss=loss, metrics=['mae'])
         print(f'\n{self.model.summary()}')
         # graphviz style model plot
-        K.utils.plot_model(
+        """K.utils.plot_model(
             self.model,
             to_file='figs/model.png',
             show_shapes=True,
             show_layer_names=True,
             rankdir="TB",
             expand_nested=True,
-        )
+        )"""
 
     def train(self, x_train, y_train, x_valid, y_valid, 
               epochs, batch_size, save_checkpoint=False, save_dir=None):
@@ -93,13 +96,13 @@ class Model(object):
                 )
             losses = self.model.fit(
                 x_train, y_train, epochs=epochs, batch_size=self.batch_size, 
-                verbose=1, callbacks=[callback, lr_scheduler],
+                verbose=1, callbacks=[callback],
                 validation_data=(x_valid, y_valid), shuffle=False
                 )
         else:
             losses = self.model.fit(
                 x_train, y_train, epochs=epochs, batch_size=self.batch_size, 
-                verbose=1, callbacks=[lr_scheduler],
+                verbose=1, callbacks=[],
                 validation_data=(x_valid, y_valid), shuffle=False
                 )
         return self.model, losses

@@ -13,13 +13,13 @@ parser.add_argument('--type', type=str, default='lstm',
     choices=['lstm', 'gru'],
     help='RNN architecture type.')
 parser.add_argument('--activation', type=str, default='elu',
-    choices=['elu', 'relu', 'prelu'],
+    choices=['elu', 'relu'],
     help='Activation function.')
 parser.add_argument('--optimizer', type=str, default='adam',
     choices=['sgd', 'rmsprop', 'adam'],
     help='Algorithm for the minimization of loss function.')
 parser.add_argument('--loss_fn', type=str, default='mse',
-    choices=['mse', 'mae'],
+    choices=['mse', 'mae', 'msle'],
     help='Loss function.')
 parser.add_argument('--num_layers', type=int, default=2,
     help='Number of hidden layers.')
