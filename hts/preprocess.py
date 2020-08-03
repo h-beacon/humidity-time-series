@@ -1,10 +1,10 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from datetime import datetime
+
 from .utils import round_minutes, holoborodko_diff
-import warnings
-warnings.filterwarnings("ignore")
 
 
 def split_sequences(sequences, n_steps):

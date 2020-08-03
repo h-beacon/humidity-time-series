@@ -41,20 +41,6 @@ def dt_diff(y1, y2):
 
 
 def holoborodko_diff(y, t):
-    """Holoborodko scheme for the 1st order numerical derivation.
-
-    Params
-    ------
-    numpy.ndarray: y
-        Sampled data to be differentiated
-    pandas.core.series.Series: t
-        Irregular time deltas
-
-    Returns
-    -------
-    numpy.ndarray: y_t
-        First order differentiated data
-    """
     N = 5
     M = (N - 1) // 2
     m = (N - 3) // 2

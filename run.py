@@ -12,8 +12,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--type', type=str, default='lstm',
     choices=['lstm', 'gru'],
     help='RNN architecture type.')
-parser.add_argument('--activation', type=str, default='elu',
-    choices=['elu', 'relu'],
+parser.add_argument('--activation', type=str, default=None,
+    choices=['tanh', 'elu', 'relu'],
     help='Activation function.')
 parser.add_argument('--optimizer', type=str, default='adam',
     choices=['sgd', 'rmsprop', 'adam'],
@@ -65,7 +65,6 @@ data = merge_data(pressure, air, soil, drop_duplicate_time=True)
 x_train, y_train, x_valid, y_valid, x_test, y_test, \
     scaler = process_data(data, args.step, args.split_ratio)
 
-
 net = Model(
     type=args.type,
     input_shape=(x_train.shape[1], x_train.shape[2]),
@@ -73,10 +72,10 @@ net = Model(
     num_neurons=args.num_neurons
 )
 net.build(
-    activation=args.activation,
     optimizer=args.optimizer, 
     learning_rate=args.learning_rate, 
-    loss_fn=args.loss_fn
+    loss_fn=args.loss_fn,
+    activation=args.activation
 )
 print('\nTrain set shape: Input {} Target {}'.format(x_train.shape, y_train.shape))
 print('Valid set shape: Input {} Target {}'.format(x_valid.shape, y_valid.shape))
@@ -91,7 +90,7 @@ model, losses = net.train(
     save_checkpoint=args.save_checkpoint,
     save_dir=save_dir
 )
-predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses)
+#predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses)
 if not args.save_checkpoint:
     decision = input("\nSave model? [y,n] ")
     if decision == "y":

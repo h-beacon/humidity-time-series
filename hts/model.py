@@ -11,7 +11,7 @@ class Model(object):
         self.num_layers = num_layers 
         self.num_neurons = num_neurons 
 
-    def build(self, activation, optimizer, learning_rate, loss_fn):
+    def build(self, optimizer, learning_rate, loss_fn, activation=None):
         if self.type == 'gru':
             nn = GRU
         else:
@@ -28,14 +28,21 @@ class Model(object):
         self.model.add(nn(self.num_neurons, return_sequences=seq,
                        input_shape=self.input_shape))
         #self.model.add(Dropout(0.1))
+
         # hidden layers
         for layer in range(1, self.num_layers):
             if layer == (self.num_layers - 1):
                 seq = False
-            self.model.add(nn(self.num_neurons, activation='tanh',
-                           kernel_initializer='glorot_uniform',
-                           return_sequences=seq))
-            self.model.add(Dropout(0.2))
+            if activation:
+                self.model.add(nn(self.num_neurons, activation=activation,
+                            kernel_initializer='glorot_uniform',
+                            return_sequences=seq))
+                #self.model.add(Dropout(0.2))
+            else: # dont specify activation when training on GPU
+                self.model.add(nn(self.num_neurons,
+                            kernel_initializer='glorot_uniform',
+                            return_sequences=seq))
+
         # output layer
         self.model.add(Dense(10, activation=activation, kernel_initializer='he_normal'))
         self.model.add(Dense(1))
@@ -70,14 +77,14 @@ class Model(object):
         self.model.compile(optimizer=optim, loss=loss, metrics=['mae'])
         print(f'\n{self.model.summary()}')
         # graphviz style model plot
-        """K.utils.plot_model(
-            self.model,
-            to_file='figs/model.png',
-            show_shapes=True,
-            show_layer_names=True,
-            rankdir="TB",
-            expand_nested=True,
-        )"""
+        # K.utils.plot_model(
+        #     self.model,
+        #     to_file='figs/model.png',
+        #     show_shapes=True,
+        #     show_layer_names=True,
+        #     rankdir="TB",
+        #     expand_nested=True,
+        # )
 
     def train(self, x_train, y_train, x_valid, y_valid, 
               epochs, batch_size, save_checkpoint=False, save_dir=None):
