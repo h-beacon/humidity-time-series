@@ -1,8 +1,8 @@
 import tensorflow.keras as K
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Activation
+from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.layers import LSTM, GRU
-from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Dropout, TimeDistributed
 
 class Model(object):
     def __init__(self, type, input_shape, num_layers, num_neurons):
@@ -12,33 +12,43 @@ class Model(object):
         self.num_neurons = num_neurons 
 
     def build(self, activation, optimizer, learning_rate, loss_fn):
-        if self.type == 'gru':
-            nn = GRU
-        else:
-            nn = LSTM
-        if self.num_layers >= 2:
-            seq = True
-        else:
-            seq = False
-        self.learning_rate = learning_rate
-
-        # architecture
-        self.model = Sequential()
-        # input layer
-        self.model.add(nn(self.num_neurons, return_sequences=seq,
-                       input_shape=self.input_shape))
-        #self.model.add(Dropout(0.1))
-        # hidden layers
-        for layer in range(1, self.num_layers):
-            if layer == (self.num_layers - 1):
+        if self.type == 'lstm' or self.type == 'gru':
+            if self.type == 'gru':
+                nn = GRU
+            else:
+                nn = LSTM
+            if self.num_layers >= 2:
+                seq = True
+            else:
                 seq = False
-            self.model.add(nn(self.num_neurons, activation='tanh',
-                           kernel_initializer='glorot_uniform',
-                           return_sequences=seq))
-            self.model.add(Dropout(0.2))
-        # output layer
-        self.model.add(Dense(10, activation=activation, kernel_initializer='he_normal'))
-        self.model.add(Dense(1))
+            self.learning_rate = learning_rate
+
+            # architecture
+            self.model = Sequential()
+            # input layer
+            self.model.add(nn(self.num_neurons, return_sequences=seq,
+                           input_shape=self.input_shape))
+            #self.model.add(Dropout(0.2))
+            # hidden layers
+            for layer in range(1, self.num_layers):
+                if layer == (self.num_layers - 1):
+                    seq = False
+                self.model.add(nn(self.num_neurons, activation='tanh',
+                               kernel_initializer='glorot_uniform',
+                               return_sequences=seq))
+                self.model.add(Dropout(0.2))
+            # output layer
+            self.model.add(Dense(20, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(TimeDistributed(Dense(1)))
+
+        elif self.type == 'mlp':
+            self.learning_rate = learning_rate
+
+            self.model = Sequential()
+            self.model.add(Input(shape=self.input_shape))
+            self.model.add(Dense(128, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(Dense(64, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(Dense(1))
 
         # optimizer
         if optimizer == 'sgd':
@@ -67,7 +77,7 @@ class Model(object):
             raise ValueError('No such loss function.')
 
         # build
-        self.model.compile(optimizer=optim, loss=loss, metrics=['mae'])
+        self.model.compile(optimizer=optim, loss=loss)
         print(f'\n{self.model.summary()}')
         # graphviz style model plot
         """K.utils.plot_model(
