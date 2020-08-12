@@ -1,5 +1,6 @@
 from .utils import moving_average
 
+import tensorflow.keras
 import numpy as np 
 import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "serif"
@@ -13,25 +14,36 @@ def figsize(scale, nplots=1):
     return fig_size
 
 
-def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses):
+def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses, nn_type):
     # Function for inverse normalization
     def inverse_norm(model, x, y, scaler):
         pred = model.predict(x)
         pred = pred.reshape(-1, 1)
         y = y.reshape(-1, 1)
-        x = x[:, 0, :]
+        if nn_type == 'lstm' or nn_type == 'gru':
+            x = x[:, 0, :]  # ONLY FOR LSTM
         pred = np.concatenate((x, pred), axis=1)
         real = np.concatenate((x, y), axis=1)
         prediction = scaler.inverse_transform(pred)
         real_values = scaler.inverse_transform(real)
         prediction = prediction[:, -1]
-        prediction = moving_average(prediction, periods=100)
+        # prediction = moving_average(prediction, periods=70)  # RMSE works only without moving_average
         real_values = real_values[:, -1]
         return prediction, real_values
-    # Validation inverse normalization
+
+    def rmse(y, pred):
+        mse = tensorflow.keras.losses.MeanSquaredError()
+        loss = mse(y, pred).numpy()
+        sqrt_loss = np.sqrt(loss)
+        return sqrt_loss
+
     train_prediction, train_real = inverse_norm(model, x_train, y_train, scaler)
     valid_prediction, valid_real = inverse_norm(model, x_valid, y_valid, scaler)
     test_prediction, test_real = inverse_norm(model, x_test, y_test, scaler)
+
+    print('\nTraining RMSE: {:.5f}'.format(rmse(train_real, train_prediction)))
+    print('Validation RMSE: {:.5f}'.format(rmse(valid_real, valid_prediction)))
+    print('Test RMSE: {:.5f}'.format(rmse(test_real, test_prediction)))
 
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=False, squeeze=True,
                             figsize=figsize(1.5, 1.2))
