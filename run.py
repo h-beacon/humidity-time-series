@@ -1,16 +1,16 @@
 #! /usr/bin/env python
 
 import argparse
-import datetime
-
-from hts.preprocess import clean_soil, clean_air, process_data, add_derivation
+from tensorflow.keras import models
+from hts.preprocess import *
 from hts.visualize import predict_plot
-from hts.utils import moving_average, merge_data, load_raw_data
-from hts.model import Model 
+from hts.utils import merge_data, load_raw_data
+from hts.model import Model
+import datetime
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--type', type=str, default='lstm',
-    choices=['lstm', 'gru'],
+    choices=['lstm', 'gru', 'mlp'],
     help='RNN architecture type.')
 parser.add_argument('--activation', type=str, default='elu',
     choices=['elu', 'relu'],
@@ -38,6 +38,8 @@ parser.add_argument('--split_ratio', type=float, default=0.8,
     help='Ratio for train-test split.')
 parser.add_argument('--step', type=int, default=18,
     help='Value for timestamp.')
+parser.add_argument('--sensor_test', action='store_true',
+    help='Test the model on other sensor.')
 parser.add_argument('--save_checkpoint', action='store_true',
     help='Save the best model after the training is done.')
 args = parser.parse_args()
@@ -49,10 +51,11 @@ pressure_path = 'hts/data/DHMZ.csv'
 
 if args.dataset == 'deep':
     soil_path = 'hts/data/Senzor_zemlje_2.csv'
+    test_soil_path = 'hts/data/sensor_earth1.csv'  # TEST SENSOR
     save_dir = f'saved_models/{model_name_prefix}-deep.h5'
 
 elif args.dataset == 'shallow':
-    soil_path = 'hts/data/shallow.csv'
+    soil_path = 'hts/data/Senzor_zemlje.csv'
     save_dir = f'saved_models/{model_name_prefix}-shallow.h5'
 
 
@@ -60,18 +63,51 @@ soil_raw, pressure_raw, air_raw = load_raw_data(soil_path, pressure_path, air_pa
 soil = clean_soil(soil_raw, absolute=False)
 pressure = clean_air(pressure_raw)
 air = clean_air(air_raw)
+
+# TEST SENSOR
+test_soil_raw, pressure_raw, air_raw = load_raw_data(test_soil_path, pressure_path, air_path)
+test_soil = parse_json_data(test_soil_raw)
+test_soil = clean_soil(test_soil, absolute=False)
+
 data = merge_data(pressure, air, soil, drop_duplicate_time=True)
-# data = add_derivation(data)  # uncomment if want air_humidity derivation
-x_train, y_train, x_valid, y_valid, x_test, y_test, \
-    scaler = process_data(data, args.step, args.split_ratio)
+test_data = merge_data(pressure, air, test_soil, drop_duplicate_time=True)  # TEST SENSOR
+
+""" For adding derivation to data """
+data = additional_processing(data)
+test_data = additional_processing(test_data)
 
 
-net = Model(
-    type=args.type,
-    input_shape=(x_train.shape[1], x_train.shape[2]),
-    num_layers=args.num_layers,
-    num_neurons=args.num_neurons
-)
+if args.type == 'lstm' or args.type == 'gru':
+    if args.sensor_test:
+        x_train, y_train, x_valid, y_valid, x_test, y_test, \
+            scaler = process_data_rnn(data, args.step, args.split_ratio, test_data)
+    else:
+        x_train, y_train, x_valid, y_valid, x_test, y_test, \
+            scaler = process_data_rnn(data, args.step, args.split_ratio)
+elif args.type == 'mlp':
+    data_reframed = series_to_supervised(data.values, n_in=1)
+    data_reframed.drop('var4(t-1)', axis=1, inplace=True)
+    if args.sensor_test:
+        x_train, y_train, x_valid, y_valid, x_test, y_test, scaler = \
+            process_data_mlp(data, args.split_ratio, test_data)
+    else:
+        x_train, y_train, x_valid, y_valid, x_test, y_test, scaler = \
+            process_data_mlp(data, args.split_ratio)
+
+if args.type == 'lstm' or args.type == 'gru':
+    net = Model(
+        type=args.type,
+        input_shape=(x_train.shape[1], x_train.shape[2]),
+        num_layers=args.num_layers,
+        num_neurons=args.num_neurons
+    )
+elif args.type == 'mlp':
+    net = Model(
+        type=args.type,
+        input_shape=(x_train.shape[1],),
+        num_layers=args.num_layers,
+        num_neurons=args.num_neurons
+    )
 net.build(
     activation=args.activation,
     optimizer=args.optimizer, 
@@ -91,7 +127,10 @@ model, losses = net.train(
     save_checkpoint=args.save_checkpoint,
     save_dir=save_dir
 )
-predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses)
+if args.save_checkpoint:
+    model = models.load_model(save_dir)
+    print('\n---Loaded model checkpoint---\n')
+predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses, nn_type=args.type)
 if not args.save_checkpoint:
     decision = input("\nSave model? [y,n] ")
     if decision == "y":
