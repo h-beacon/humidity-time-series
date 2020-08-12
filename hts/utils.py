@@ -38,6 +38,8 @@ def merge_data(csv_1, csv_2, csv_3, drop_duplicate_time=False):
     merged.pressure = merged['pressure'].rolling(100, min_periods=1).mean()
     merged['69886_rssi'] = merged['69886_rssi'].rolling(100, min_periods=1).mean()
     merged['69886_snr'] = merged['69886_snr'].rolling(100, min_periods=1).mean()
+    """ For choosing predictors """
+    #merged = merged[['pressure', 'air_temp','air_humidity','soil_humidity']]
     return merged
 
 

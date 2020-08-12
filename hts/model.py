@@ -39,7 +39,7 @@ class Model(object):
                 self.model.add(Dropout(0.2))
             # output layer
             self.model.add(Dense(20, activation=activation, kernel_initializer='he_normal'))
-            self.model.add(TimeDistributed(Dense(1)))
+            self.model.add(Dense(1))
 
         elif self.type == 'mlp':
             self.learning_rate = learning_rate
