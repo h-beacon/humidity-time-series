@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, PowerTransformer, RobustScaler, QuantileTransformer
 from datetime import datetime
 from .utils import round_minutes, holoborodko_diff, cumulative
 import json
@@ -123,7 +123,6 @@ def clean_soil(csv, absolute=False):
             csv[var] = csv[var].map(lambda x: np.power(10, x/10))
     csv.drop('soil_temp', axis=1, inplace=True)
     csv.time = csv['time'].map(lambda x: round_minutes(x))
-    #csv = csv.drop_duplicates('time', keep='last')
     csv.dropna(axis=0, inplace=True)
     csv.reset_index(drop=True, inplace=True)
     csv.set_index('time', drop=True, inplace=True)
@@ -151,7 +150,6 @@ def clean_air(csv):
     elif "DHMZ_new" in csv.name.values:
         csv.rename(columns={'Tlak': 'pressure'}, inplace=True)
     csv.time = csv['time'].map(lambda x: round_minutes(x))
-    #csv = csv.drop_duplicates('time', keep='last')
     csv.reset_index(drop=True, inplace=True)
     csv.set_index('time', drop=True, inplace=True)
     csv.drop(['name'], axis=1, inplace=True)
