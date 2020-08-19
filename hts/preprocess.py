@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, PowerTransformer, RobustScaler, QuantileTransformer
@@ -6,6 +8,9 @@ from .utils import round_minutes, holoborodko_diff, cumulative
 import json
 import warnings
 warnings.filterwarnings("ignore")
+from sklearn.preprocessing import MinMaxScaler
+
+from .utils import round_minutes, holoborodko_diff
 
 
 def split_sequences(sequences, n_steps):
@@ -166,7 +171,7 @@ def add_derivation(data, column):
     data.set_index('time', drop=True, inplace=True)
     return data
 
-
+  
 def additional_processing(csv):
     #cols = ['pressure', 'air_temp', 'air_humidity', '69886_rssi', '69886_snr', 'soil_humidity']
     cols = ['69886_rssi', '69886_snr', 'soil_humidity']

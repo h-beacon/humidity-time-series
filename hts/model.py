@@ -103,14 +103,14 @@ class Model(object):
         self.model.compile(optimizer=optim, loss=loss)
         print(f'\n{self.model.summary()}')
         # graphviz style model plot
-        """K.utils.plot_model(
-            self.model,
-            to_file='figs/model.png',
-            show_shapes=True,
-            show_layer_names=True,
-            rankdir="TB",
-            expand_nested=True,
-        )"""
+        # K.utils.plot_model(
+        #     self.model,
+        #     to_file='figs/model.png',
+        #     show_shapes=True,
+        #     show_layer_names=True,
+        #     rankdir="TB",
+        #     expand_nested=True,
+        # )
 
     def train(self, x_train, y_train, x_valid, y_valid, 
               epochs, batch_size, save_checkpoint=False, save_dir=None):

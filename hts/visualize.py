@@ -58,7 +58,7 @@ def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scal
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=False, squeeze=True,
                             figsize=figsize(1.5, 1.2))
     axs[0, 0].plot(train_real, 'b-', label='True data')
-    axs[0, 0].plot(train_prediction, 'r-', label='Predicted data')
+    axs[0, 0].plot(train_prediction, 'r--', label='Predicted data')
     axs[0, 0].set_xlabel('Time point')
     axs[0, 0].set_ylabel('Humidity [%]')
     axs[0, 0].legend(loc='best')
@@ -66,7 +66,7 @@ def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scal
     axs[0, 0].grid()
 
     axs[1, 0].plot(valid_real, 'b-', label='True data')
-    axs[1, 0].plot(valid_prediction, 'r-', label='Predicted data')
+    axs[1, 0].plot(valid_prediction, 'r--', label='Predicted data')
     axs[1, 0].set_xlabel('Time point')
     axs[1, 0].set_ylabel('Humidity [%]')
     axs[1, 0].legend(loc='best')
@@ -74,15 +74,15 @@ def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scal
     axs[1, 0].grid()
 
     axs[0, 1].plot(test_real, 'b-', label='True data')
-    axs[0, 1].plot(test_prediction, 'r-', label='Predicted data')
+    axs[0, 1].plot(test_prediction, 'r--', label='Predicted data')
     axs[0, 1].set_xlabel('Time point')
     axs[0, 1].set_ylabel('Humidity [%]')
     axs[0, 1].legend(loc='best')
     axs[0, 1].set_title('Test dataset')
     axs[0, 1].grid()
 
-    axs[1, 1].plot(losses.history['loss'], 'b-', label='Train')
-    axs[1, 1].plot(losses.history['val_loss'], 'r-', label='Validation')
+    axs[1, 1].plot(losses.history['loss'], 'k-', label='Train')
+    axs[1, 1].plot(losses.history['val_loss'], 'k--', label='Validation')
     axs[1, 1].set_xlabel('Epochs')
     axs[1, 1].set_ylabel('Loss')
     axs[1, 1].legend(loc='best')
@@ -91,5 +91,3 @@ def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scal
  
     plt.tight_layout()
     plt.show()
-
-
