@@ -14,13 +14,14 @@ def figsize(scale, nplots=1):
     return fig_size
 
 
-def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses, nn_type):
+def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses, nn_type,
+                 mean_list=None, test_mean_list=None):
     # Function for inverse normalization
     def inverse_norm(model, x, y, scaler):
         pred = model.predict(x)
         pred = pred.reshape(-1, 1)
         y = y.reshape(-1, 1)
-        if nn_type == 'lstm' or nn_type == 'gru':
+        if nn_type == 'lstm' or nn_type == 'gru' or nn_type == 'tcn':
             x = x[:, 0, :]  # ONLY FOR LSTM
         pred = np.concatenate((x, pred), axis=1)
         real = np.concatenate((x, y), axis=1)
@@ -41,9 +42,18 @@ def predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scal
     valid_prediction, valid_real = inverse_norm(model, x_valid, y_valid, scaler)
     test_prediction, test_real = inverse_norm(model, x_test, y_test, scaler)
 
-    print('\nTraining RMSE: {:.5f}'.format(rmse(train_real, train_prediction)))
-    print('Validation RMSE: {:.5f}'.format(rmse(valid_real, valid_prediction)))
-    print('Test RMSE: {:.5f}'.format(rmse(test_real, test_prediction)))
+    """ ADDING MEANS """
+    if mean_list and test_mean_list:
+        train_prediction = train_prediction + mean_list[-1]
+        train_real = train_real + mean_list[-1]
+        valid_prediction = valid_prediction + test_mean_list[-1]
+        valid_real = valid_real + test_mean_list[-1]
+        test_prediction = test_prediction + test_mean_list[-1]
+        test_real = test_real + test_mean_list[-1]
+
+    print('\nTraining RMSE: {:.3f}'.format(rmse(train_real, train_prediction)))
+    print('Validation RMSE: {:.3f}'.format(rmse(valid_real, valid_prediction)))
+    print('Test RMSE: {:.3f}'.format(rmse(test_real, test_prediction)))
 
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=False, squeeze=True,
                             figsize=figsize(1.5, 1.2))
