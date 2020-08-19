@@ -4,13 +4,13 @@ import argparse
 from tensorflow.keras import models
 from hts.preprocess import *
 from hts.visualize import predict_plot
-from hts.utils import merge_data, load_raw_data
+from hts.utils import merge_data, load_raw_data, parse
 from hts.model import Model
 import datetime
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--type', type=str, default='lstm',
-    choices=['lstm', 'gru', 'mlp'],
+    choices=['lstm', 'gru', 'mlp', 'tcn'],
     help='RNN architecture type.')
 parser.add_argument('--activation', type=str, default='elu',
     choices=['elu', 'relu'],
@@ -40,6 +40,8 @@ parser.add_argument('--step', type=int, default=18,
     help='Value for timestamp.')
 parser.add_argument('--sensor_test', action='store_true',
     help='Test the model on other sensor.')
+parser.add_argument('--derivate', action='store_true',
+    help='Using derivation of variables')
 parser.add_argument('--save_checkpoint', action='store_true',
     help='Save the best model after the training is done.')
 args = parser.parse_args()
@@ -72,12 +74,18 @@ test_soil = clean_soil(test_soil, absolute=False)
 data = merge_data(pressure, air, soil, drop_duplicate_time=True)
 test_data = merge_data(pressure, air, test_soil, drop_duplicate_time=True)  # TEST SENSOR
 
+
+#data, means = parse(data)
+#test_data, test_means = parse(test_data)
+
+
 """ For adding derivation to data """
-data = additional_processing(data)
-test_data = additional_processing(test_data)
+if args.derivate:
+    data = additional_processing(data)
+    test_data = additional_processing(test_data)
 
 
-if args.type == 'lstm' or args.type == 'gru':
+if args.type == 'lstm' or args.type == 'gru' or args.type == 'tcn':
     if args.sensor_test:
         x_train, y_train, x_valid, y_valid, x_test, y_test, \
             scaler = process_data_rnn(data, args.step, args.split_ratio, test_data)
@@ -86,15 +94,17 @@ if args.type == 'lstm' or args.type == 'gru':
             scaler = process_data_rnn(data, args.step, args.split_ratio)
 elif args.type == 'mlp':
     data_reframed = series_to_supervised(data.values, n_in=1)
-    data_reframed.drop('var4(t-1)', axis=1, inplace=True)
+    data_reframed.drop('var6(t-1)', axis=1, inplace=True)
     if args.sensor_test:
+        data_test_reframed = series_to_supervised(test_data.values, n_in=1)
+        data_test_reframed.drop('var6(t-1)', axis=1, inplace=True)
         x_train, y_train, x_valid, y_valid, x_test, y_test, scaler = \
-            process_data_mlp(data, args.split_ratio, test_data)
+            process_data_mlp(data, args.split_ratio, data)
     else:
         x_train, y_train, x_valid, y_valid, x_test, y_test, scaler = \
             process_data_mlp(data, args.split_ratio)
 
-if args.type == 'lstm' or args.type == 'gru':
+if args.type == 'lstm' or args.type == 'gru' or args.type == 'tcn':
     net = Model(
         type=args.type,
         input_shape=(x_train.shape[1], x_train.shape[2]),
@@ -130,7 +140,8 @@ model, losses = net.train(
 if args.save_checkpoint:
     model = models.load_model(save_dir)
     print('\n---Loaded model checkpoint---\n')
-predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses, nn_type=args.type)
+predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses, nn_type=args.type,
+             mean_list=None, test_mean_list=None)
 if not args.save_checkpoint:
     decision = input("\nSave model? [y,n] ")
     if decision == "y":
