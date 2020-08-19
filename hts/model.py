@@ -1,8 +1,10 @@
 import tensorflow.keras as K
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Activation
+from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.layers import LSTM, GRU
 from tensorflow.keras.layers import Dropout
+from tcn import TCN
+
 
 class Model(object):
     def __init__(self, type, input_shape, num_layers, num_neurons):
@@ -11,41 +13,65 @@ class Model(object):
         self.num_layers = num_layers 
         self.num_neurons = num_neurons 
 
-    def build(self, optimizer, learning_rate, loss_fn, activation=None):
-        if self.type == 'gru':
-            nn = GRU
-        else:
-            nn = LSTM
-        if self.num_layers >= 2:
-            seq = True
-        else:
-            seq = False
-        self.learning_rate = learning_rate
-
-        # architecture
-        self.model = Sequential()
-        # input layer
-        self.model.add(nn(self.num_neurons, return_sequences=seq,
-                       input_shape=self.input_shape))
-        #self.model.add(Dropout(0.1))
-
-        # hidden layers
-        for layer in range(1, self.num_layers):
-            if layer == (self.num_layers - 1):
+    def build(self, activation, optimizer, learning_rate, loss_fn):
+        if self.type == 'lstm' or self.type == 'gru':
+            if self.type == 'gru':
+                nn = GRU
+            else:
+                nn = LSTM
+            if self.num_layers >= 2:
+                seq = True
+            else:
                 seq = False
-            if activation:
-                self.model.add(nn(self.num_neurons, activation=activation,
-                            kernel_initializer='glorot_uniform',
-                            return_sequences=seq))
-                #self.model.add(Dropout(0.2))
-            else: # dont specify activation when training on GPU
-                self.model.add(nn(self.num_neurons,
-                            kernel_initializer='glorot_uniform',
-                            return_sequences=seq))
+            self.learning_rate = learning_rate
 
-        # output layer
-        self.model.add(Dense(10, activation=activation, kernel_initializer='he_normal'))
-        self.model.add(Dense(1))
+            # architecture
+            self.model = Sequential()
+            # input layer
+            self.model.add(nn(self.num_neurons, return_sequences=seq,
+                           input_shape=self.input_shape))
+            # self.model.add(Dropout(0.2))
+            # hidden layers
+            for layer in range(1, self.num_layers):
+                if layer == (self.num_layers - 1):
+                    seq = False
+                self.model.add(nn(self.num_neurons, activation='tanh',
+                               kernel_initializer='glorot_uniform',
+                               return_sequences=seq))
+                self.model.add(Dropout(0.2))
+            # output layer
+            self.model.add(Dense(20, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(Dense(1))
+
+        elif self.type == 'mlp':
+            self.learning_rate = learning_rate
+
+            self.model = Sequential()
+            self.model.add(Input(shape=self.input_shape))
+            self.model.add(Dense(128, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(Dense(64, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(Dense(1))
+
+        elif self.type == 'tcn':
+            self.learning_rate = learning_rate
+            if self.num_layers >= 2:
+                seq = True
+            else:
+                seq = False
+            # architecture
+            self.model = Sequential()
+            # input layer
+            self.model.add(TCN(nb_filters=self.num_neurons, kernel_size=2, nb_stacks=2, dilations=[1, 2, 4, 8],
+                               return_sequences=seq, input_shape=self.input_shape))
+            # hidden layers
+            for layer in range(1, self.num_layers):
+                if layer == (self.num_layers - 1):
+                    seq = False
+                self.model.add(TCN(nb_filters=self.num_neurons, kernel_size=2, nb_stacks=2, dilations=[1, 2, 4, 8],
+                                   return_sequences=seq))
+            # output layer
+            self.model.add(Dense(20, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(Dense(1))
 
         # optimizer
         if optimizer == 'sgd':
@@ -74,7 +100,7 @@ class Model(object):
             raise ValueError('No such loss function.')
 
         # build
-        self.model.compile(optimizer=optim, loss=loss, metrics=['mae'])
+        self.model.compile(optimizer=optim, loss=loss)
         print(f'\n{self.model.summary()}')
         # graphviz style model plot
         # K.utils.plot_model(
