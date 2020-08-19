@@ -21,9 +21,15 @@ def round_minutes(tm):
     return tm
 
 
+def parse(csv):
+    means = []
+    for col in csv.columns:
+        means.append(csv[col].mean())
+        csv[col] = csv[col].map(lambda x: x - csv[col].mean())
+    return csv, means
+
+
 def merge_data(csv_1, csv_2, csv_3, drop_duplicate_time=False):
-    """ Option for using moving average window aprox. on duplicate timestamps
-        and droping those duplicates """
     merge = pd.merge(csv_1, csv_2, how='inner', left_index=True, right_index=True)
     merged = pd.merge(merge, csv_3, how='inner', left_index=True, right_index=True)
     if drop_duplicate_time:
@@ -33,13 +39,14 @@ def merge_data(csv_1, csv_2, csv_3, drop_duplicate_time=False):
         merged = merged.drop_duplicates('time', keep='last')
         merged.reset_index(drop=True, inplace=True)
         merged.set_index('time', drop=True, inplace=True)
+    """ Rolling mean """
     merged.air_humidity = merged['air_humidity'].rolling(100, min_periods=1).mean()
     merged.air_temp = merged['air_temp'].rolling(100, min_periods=1).mean()
     merged.pressure = merged['pressure'].rolling(100, min_periods=1).mean()
     merged['69886_rssi'] = merged['69886_rssi'].rolling(100, min_periods=1).mean()
     merged['69886_snr'] = merged['69886_snr'].rolling(100, min_periods=1).mean()
     """ For choosing predictors """
-    #merged = merged[['pressure', 'air_temp','air_humidity','soil_humidity']]
+    merged = merged[['pressure', 'air_temp', 'air_humidity', '69886_rssi', '69886_snr', 'soil_humidity']]
     return merged
 
 
