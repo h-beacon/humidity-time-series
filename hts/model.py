@@ -2,7 +2,9 @@ import tensorflow.keras as K
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.layers import LSTM, GRU
-from tensorflow.keras.layers import Dropout, TimeDistributed
+from tensorflow.keras.layers import Dropout
+from tcn import TCN
+
 
 class Model(object):
     def __init__(self, type, input_shape, num_layers, num_neurons):
@@ -28,7 +30,7 @@ class Model(object):
             # input layer
             self.model.add(nn(self.num_neurons, return_sequences=seq,
                            input_shape=self.input_shape))
-            #self.model.add(Dropout(0.2))
+            # self.model.add(Dropout(0.2))
             # hidden layers
             for layer in range(1, self.num_layers):
                 if layer == (self.num_layers - 1):
@@ -48,6 +50,27 @@ class Model(object):
             self.model.add(Input(shape=self.input_shape))
             self.model.add(Dense(128, activation=activation, kernel_initializer='he_normal'))
             self.model.add(Dense(64, activation=activation, kernel_initializer='he_normal'))
+            self.model.add(Dense(1))
+
+        elif self.type == 'tcn':
+            self.learning_rate = learning_rate
+            if self.num_layers >= 2:
+                seq = True
+            else:
+                seq = False
+            # architecture
+            self.model = Sequential()
+            # input layer
+            self.model.add(TCN(nb_filters=self.num_neurons, kernel_size=2, nb_stacks=2, dilations=[1, 2, 4, 8],
+                               return_sequences=seq, input_shape=self.input_shape))
+            # hidden layers
+            for layer in range(1, self.num_layers):
+                if layer == (self.num_layers - 1):
+                    seq = False
+                self.model.add(TCN(nb_filters=self.num_neurons, kernel_size=2, nb_stacks=2, dilations=[1, 2, 4, 8],
+                                   return_sequences=seq))
+            # output layer
+            self.model.add(Dense(20, activation=activation, kernel_initializer='he_normal'))
             self.model.add(Dense(1))
 
         # optimizer
