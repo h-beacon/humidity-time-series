@@ -144,12 +144,3 @@ if args.save_checkpoint:
     print('\n---Loaded model checkpoint---\n')
 predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses, nn_type=args.type,
              mean_list=None, test_mean_list=None)
-
-#predict_plot(model, x_train, y_train, x_valid, y_valid, x_test, y_test, scaler, losses=losses)
-
-if not args.save_checkpoint:
-    decision = input("\nSave model? [y,n] ")
-    if decision == "y":
-        model.save(save_dir)
-    else:
-        pass

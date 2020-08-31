@@ -3,7 +3,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.layers import LSTM, GRU
 from tensorflow.keras.layers import Dropout
-from tcn import TCN
+#from tcn import TCN
 
 
 class Model(object):
